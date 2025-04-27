@@ -1,0 +1,159 @@
+services:
+  dns:
+    build: ./dns
+    container_name: dns-server
+    networks:
+      servidores:
+        ipv4_address: 172.20.1.10
+      # DNS ainda pode ter interface na rede de clientes para resolução direta, se necessário.
+      # Vamos manter por enquanto para simplicidade na comunicação inicial.
+    volumes:
+      - ./dns/named.conf.options:/etc/bind/named.conf.options:ro
+      - ./dns/db.intranet.local:/etc/bind/db.intranet.local:ro
+      - ./dns/db.172.20.1:/etc/bind/db.172.20.1:ro
+      - ./dns/db.2.20.172:/etc/bind/db.2.20.172:ro # Adicione esta linha
+      - ./dns/named.conf.local:/etc/bind/named.conf.local:ro # Adicione esta linha
+    ports:
+      - "10053:53/tcp"
+      - "10053:53/udp"
+    restart: unless-stopped
+
+  dhcp:
+    build: ./dhcp # Ensure Dockerfile sets CMD to listen on eth0 or all
+    container_name: dhcp-server
+    networks:
+      servidores: # *** DHCP Server agora APENAS na rede servidores ***
+        ipv4_address: 172.20.1.12
+      # *** REMOVIDO: Conexão com a rede clientes ***
+      # clientes:
+      #   ipv4_address: 192.168.2.2 # Este IP será removido
+    volumes:
+      - ./dhcp/dhcpd.conf:/etc/dhcp/dhcpd.conf:ro # Still needs 192.168.2.0/24 subnet config
+      - dhcp_data:/var/lib/dhcp
+    # privileged: true # Pode não ser mais necessário só para o servidor DHCP
+
+  ftp:
+    build: ./ftp # Constrói a imagem a partir do Dockerfile na pasta ./ftp
+    container_name: ftp-server
+    networks:
+      servidores: # Servidor FTP deve estar na rede de servidores
+        # Atribua um IP estático na sub-rede de servidores (10.10.1.x)
+        ipv4_address: 172.20.1.16 # Exemplo: usando .14 para o ftp server
+    volumes:
+      # Monta o arquivo de configuração vsftpd no container
+      - ./ftp/vsftpd.conf:/etc/vsftpd.conf:ro
+      # Opcional: Montar um diretório para os arquivos a serem compartilhados
+      # - ./ftp_data:/home/vsftpd_users:rw # Crie a pasta ./ftp_data no host
+    ports:
+      # Mapeia a porta de controle FTP (21) do container para uma porta no host
+      # Útil para testar do host. Use uma porta livre no seu host (ex: 2121)
+      - "2121:21"
+      # *** SE USAR MODO PASSIVO E QUISER ACESSAR DO HOST, MAPEIE A FAIXA DE PORTAS PASSIVAS ***
+      # - "20000-21000:20000-21000" # Mapeia a faixa definida no vsftpd.conf
+    command: ["/usr/sbin/vsftpd", "-v", "/etc/vsftpd.conf"]
+
+    restart: unless-stopped
+
+  ldap:
+    image: osixia/openldap:1.5.0 # Imagem do servidor OpenLDAP
+    container_name: ldap-server # Nome do container
+    networks:
+      servidores: # Conecta o LDAP APENAS na rede de servidores
+        # Atribua um IP estático na sub-rede de servidores (172.20.1.x)
+        ipv4_address: 172.20.1.18 # Definindo o IP .18 para o LDAP. Confirme que não há conflito.
+    ports:
+      # Mapeia as portas padrão do LDAP (389) e LDAPS (636) do container para o host.
+      # Isso é útil para acessar o LDAP diretamente do host para administração, mas não é necessário para a comunicação interna Cliente <-> Router <-> LDAP.
+      # Se não quiser mapear para o host, pode remover esta seção ou comentar as linhas.
+      - "389:389"   # Porta LDAP (não criptografado)
+      - "636:636"   # Porta LDAPS (com SSL/TLS)
+    environment:
+      # Variáveis de ambiente para configurar o servidor OpenLDAP na primeira inicialização
+      LDAP_DOMAIN: intranet.local # Define o domínio base do seu diretório
+      LDAP_ADMIN: admin # Define o nome de usuário administrador (CN)
+      LDAP_PASSWORD: sua_senha_do_admin_aqui # <<< MUDE ESTA SENHA! >>>
+      LDAP_BASE_DN: dc=intranet,dc=local # Define a Base DN (gerada do LDAP_DOMAIN)
+      # Opcional: Configurações para TLS (LDAPS na porta 636)
+      LDAP_TLS: true # Habilita TLS/SSL
+      LDAP_TLS_CRT_CN: ldap.intranet.local # CN para o certificado TLS gerado automaticamente
+
+    volumes:
+      # Define um volume para persistir os dados do diretório LDAP. ESSENCIAL para não perder seus usuários e grupos.
+      - ldap_data:/var/lib/ldap
+      # Opcional: Você pode montar seus próprios arquivos de configuração ou schemas aqui se precisar de customizações avançadas.
+      # - ./ldap/config:/etc/ldap/slapd.d # Exemplo para montar a configuração OLC (cn=config)
+      # - ./ldap/schemas:/etc/ldap/schema # Exemplo para montar schemas customizados
+    restart: unless-stopped
+
+  router:
+    build: ./router # Ensure Dockerfile installs isc-dhcp-relay
+    container_name: router
+    networks:
+      servidores: # Router continua em ambas as redes
+        ipv4_address: 172.20.1.7
+      clientes:
+        ipv4_address: 172.20.2.7
+    privileged: true # Ainda necessário para roteamento, sysctl, e possivelmente relay
+    command: 
+      bash -c "ip route add 172.20.2.0/24 dev eth1 && sysctl -w net.ipv4.ip_forward=1 && /usr/sbin/dhcrelay -i eth1 172.20.1.12 & tail -f /dev/null"
+
+      # *** ATUALIZADO: Comando para iniciar roteamento E Agente de Relé DHCP ***
+      # O comando exato para o relay dependerá do software instalado (ex: isc-dhcp-relay)
+      # Substitua <INTERFACE_CLIENTE> pelo nome da interface na rede clientes (provavelmente eth1)
+      # Substitua <IP_SERVIDOR_DHCP> pelo IP do servidor DHCP na rede servidores (192.168.1.11)
+      # sh -c "ip route add 172.20.2.0/24 dev eth1 && sysctl -w net.ipv4.ip_forward=1 && /usr/sbin/dhcrelay -i eth1 172.20.1.12 && tail -f /dev/null"
+    restart: unless-stopped
+  web:
+    build: ./web # Constrói a imagem a partir do Dockerfile na pasta ./web
+    container_name: web-server
+    networks:
+      servidores: # Servidor Web deve estar na rede de servidores
+        # Atribua um IP estático na sub-rede de servidores (10.10.1.x)
+        ipv4_address: 172.20.1.14 # Exemplo: usando .15 para o web server
+    volumes:
+      # Monta o arquivo index.html do host no diretório web raiz do Apache no container
+      - ./web/index.html:/var/www/html/index.html:ro
+    ports:
+      # Mapeia a porta 80 do container para uma porta no seu host Windows
+      # Isso permite que você acesse o servidor Web do seu navegador no host
+      # Use uma porta livre no seu host (ex: 8080)
+      - "8080:80"
+    restart: unless-stopped
+  cliente:
+    build: ./cliente # Consider changing to just 'alpine' or use entrypoint:
+    container_name: cliente1
+    networks:
+      clientes: {} # Cliente continua APENAS na rede clientes
+    depends_on:
+      # O cliente não depende diretamente do servidor DHCP, mas sim da rede e do router/relay
+      # depends_on:
+      #   - dhcp # Removido dependência direta, dependência é implícita via rede
+      - router # Depende do router para relay
+    command: sleep infinity
+    restart: unless-stopped
+
+networks:
+  servidores:
+    driver: bridge # Mantendo bridge por enquanto, mas a lógica vale para macvlan também
+    #driver: macvlan # Se voltar para macvlan, descomente e ajuste parent:
+    #driver_opts:
+    #  parent: eth0
+    ipam:
+      config:
+        - subnet: 172.20.1.0/24
+          # Gateway é o IP do roteador na rede servidores (192.168.1.5)
+          gateway: 172.20.1.1
+
+  clientes:
+    driver: bridge # Mantendo bridge por enquanto
+    #driver: macvlan # Se voltar para macvlan, descomente e ajuste parent:
+    #driver_opts:
+    #  parent: eth0
+    ipam:
+      config:
+        - subnet: 172.20.2.0/24
+          gateway: 172.20.2.1 # Gateway para esta sub-rede aponta para o IP do roteador
+
+volumes:
+  dhcp_data:
+  ldap_data: # Adicione este volume

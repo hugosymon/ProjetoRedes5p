@@ -1,0 +1,17 @@
+$TTL    86400
+@       IN      SOA     dns.intranet.local. admin.intranet.local. (
+                        2025042001      ; Serial
+                        3600            ; Refresh
+                        1800            ; Retry
+                        604800          ; Expire
+                        86400           ; Minimum TTL
+                        )
+;
+@       IN      NS      dns.intranet.local.
+10      IN      PTR     dns.intranet.local.
+7       IN      PTR     router.intranet.local.
+12      IN      PTR     dhcp.intranet.local.
+14      IN      PTR     web.intranet.local.
+18      IN      PTR     ldap.intranet.local.
+13      IN      PTR     samba.intranet.local.
+16      IN      PTR     ftp.intranet.local.

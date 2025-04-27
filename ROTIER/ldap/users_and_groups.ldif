@@ -1,0 +1,34 @@
+# Arquivo: ./ldap/users_and_groups.ldif
+
+# Cria um usuário de exemplo
+# dn: Distinguished Name (Nome Distinto) - Identificador único
+dn: uid=joaosilva,ou=users,dc=intranet,dc=local # uid=login,ou=OU,BaseDN
+objectClass: inetOrgPerson # Classe de objeto comum para pessoas
+objectClass: posixAccount # Classe de objeto para contas de usuário Unix-like
+uid: joaosilva # Atributo de login (User ID)
+cn: Joao Silva # Common Name (Nome Comum)
+sn: Silva # Sobrenome
+givenName: Joao # Primeiro Nome
+uidNumber: 1001 # Número UID único (para sistemas Unix/Linux)
+gidNumber: 1001 # GID primário (geralmente igual ao UID para usuário individual)
+homeDirectory: /home/joaosilva # Diretório home (para sistemas Unix/Linux)
+loginShell: /bin/bash # Shell de login (para sistemas Unix/Linux)
+# Senha: Use uma senha criptografada. Gere com 'slappasswd' em um sistema Linux com ferramentas OpenLDAP
+userPassword: {SSHA}SUA_SENHA_CRIPTOGRAFADA_AQUI # <<< *** SUBSTITUA PELA SENHA CRIPTOGRAFADA REAL! *** >>>
+mail: joaosilva@intranet.local # Email do usuário
+description: Usuario de exemplo para testes LDAP
+
+# Cria um grupo de exemplo
+dn: cn=equipe_ti,ou=groups,dc=intranet,dc=local # cn=Nome do Grupo,ou=OU,BaseDN
+objectClass: posixGroup # Classe de objeto para grupos Unix-like
+cn: equipe_ti # Common Name (Nome do Grupo)
+gidNumber: 5001 # Número GID único (para sistemas Unix/Linux)
+description: Grupo da Equipe de TI
+
+# Adiciona o usuário 'joaosilva' ao grupo 'equipe_ti'
+# Modifica a entrada do grupo 'equipe_ti'
+dn: cn=equipe_ti,ou=groups,dc=intranet,dc=local
+changetype: modify # Tipo de operação: modificar entrada existente
+add: memberUid # Adiciona o atributo 'memberUid'
+memberUid: joaosilva # Adiciona o valor 'joaosilva' ao atributo memberUid (para posixGroup)
+# Para objectClass groupOfNames, seria 'member: uid=joaosilva,ou=users,dc=intranet,dc=local'

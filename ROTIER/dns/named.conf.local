@@ -1,0 +1,24 @@
+//
+// Do any local configuration here
+//
+
+// Declaração da zona forward
+zone "intranet.local" IN {
+    type master;
+    file "/etc/bind/db.intranet.local";
+    allow-update { none; }; // Ou IPs que podem atualizar a zona dinamicamente
+};
+
+// Declaração da zona reversa para a rede servidores
+zone "1.20.172.in-addr.arpa" IN {
+    type master;
+    file "/etc/bind/db.1.20.172"; // Confirme este nome de arquivo
+    allow-update { none; };
+};
+
+// Declaração da zona reversa para a rede clientes
+zone "2.20.172.in-addr.arpa" IN {
+    type master;
+    file "/etc/bind/db.2.20.172"; // Confirme este nome de arquivo
+    allow-update { none; };
+};
