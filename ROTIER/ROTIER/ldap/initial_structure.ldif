@@ -1,0 +1,11 @@
+# Arquivo: ./ldap/initial_structure.ldif
+
+# Cria a unidade organizacional para Usuários
+dn: ou=users,dc=intranet,dc=local
+objectClass: organizationalUnit
+ou: users
+
+# Cria a unidade organizacional para Grupos
+dn: ou=groups,dc=intranet,dc=local
+objectClass: organizationalUnit
+ou: groups

@@ -1,0 +1,11 @@
+$TTL    604800
+@       IN      SOA     dns.intranet.local. admin.intranet.local. (
+                        1         ; Serial
+                        604800         ; Refresh
+                        86400         ; Retry
+                        2419200         ; Expire
+                        604800 )       ; Negative Cache TTL
+;
+@       IN      NS      dns.intranet.local.
+100     IN      PTR     cliente1.intranet.local.
+7       IN      PTR     router.intranet.local.
