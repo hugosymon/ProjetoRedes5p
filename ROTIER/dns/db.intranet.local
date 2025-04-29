@@ -12,7 +12,6 @@ dns     IN      A       172.20.1.10
 router  IN      A       172.20.1.7
 dhcp    IN      A       172.20.1.12
 web     IN      A       172.20.1.14  
-ldap    IN      A       172.20.1.18  ; Placeholder para o futuro servidor LDAP
-samba   IN      A       172.20.1.13  ; Placeholder para o futuro servidor SAMBA
-ftp     IN      A       172.20.1.16  ; Placeholder para o futuro servidor FTP
-cliente1 IN     A       172.20.2.100 ; Exemplo de cliente (será atribuído por DHCP)
+ldap    IN      A       172.20.1.18  
+samba   IN      A       172.20.1.20  
+ftp     IN      A       172.20.1.16  
