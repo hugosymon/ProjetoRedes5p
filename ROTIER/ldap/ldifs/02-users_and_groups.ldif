@@ -1,0 +1,19 @@
+dn: uid=joaosilva,ou=users,dc=intranet,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: top
+cn: João Silva
+sn: Silva
+uid: joaosilva
+uidNumber: 10000
+gidNumber: 10000
+homeDirectory: /home/joaosilva
+loginShell: /bin/bash
+mail: joaosilva@intranet.local
+userPassword: {SSHA}5en6G6MezRroT3XKqkdPOmY/BfQ=
+
+dn: cn=equipe_ti,ou=groups,dc=intranet,dc=local
+objectClass: posixGroup
+cn: equipe_ti
+gidNumber: 10000
+memberUid: joaosilva
