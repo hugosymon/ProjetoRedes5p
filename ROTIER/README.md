@@ -1,72 +1,152 @@
-# Projeto de Rede com Docker - Serviços Básicos (Funcional)
+# Projeto Parcial: Infraestrutura de Rede em Docker
 
-Este projeto implementa os serviços básicos de rede (DNS, DHCP e Roteador) utilizando Docker. Agora com configurações mais completas e um container de cliente para testes.
+## Informacoes Gerais
+**Disciplina**: Serviços de Redes de Computadores - 5º Período  
+**Professor**: Roitier Campos Gonçalves  
+**Grupo**: Emiliano Ferreira de Souza Junior, Mário Alves Fernandes Neto, Hugo Symon Donega de Moura  
+**Entrega**: 29/04/2025  
+**Valor**: 5 pontos  
 
-## Pré-requisitos
+## Objetivo
+Implementar uma infraestrutura de rede corporativa básica, usando Docker, com serviços essenciais como DNS, DHCP, Firewall, LDAP, SAMBA, FTP e Web Server, organizados em sub-redes e interligados por um container roteador.
 
-* Docker instalado
-* Docker Compose instalado
+## Requisitos Técnicos
+- Docker Compose
+- Duas sub-redes:
+  - **172.20.1.0/24**: Servidores
+  - **172.20.2.0/24**: Clientes
+- Roteador como gateway entre as redes
+- Execução automatizada com `docker-compose up`
 
-## Como Executar
+## Estrutura do Projeto
+```
+.
+├── containers/
+│   ├── cliente/
+│   ├── dhcp/
+│   ├── dns/
+│   ├── firewall/ (embutido no router)
+│   ├── ftp/
+│   ├── ldap/
+│   ├── router/
+│   ├── samba/
+│   └── web/
+├── docker-compose.yml
+├── volumes/ (dados persistentes)
+└── README.md
+```
 
-1.  Clone este repositório (ou crie a estrutura de arquivos acima).
-2.  Navegue até o diretório raiz do projeto (`projeto-rede-docker`).
-3.  Execute o seguinte comando no terminal:
+## Serviços Implementados
+### 1. DNS (Bind9)
+- Resolve nomes como `web.intranet.local`.
+- Zonas direta e reversa criadas.
+- IP: `172.20.1.10`
 
-    ```bash
-    docker-compose up -d
-    ```
+### 2. DHCP (ISC DHCP Server)
+- Atribui IP dinâmico aos clientes da rede `172.20.2.0/24`.
+- Configurado com DHCP Relay no roteador.
+- IP: `172.20.1.12`
 
-## Como Testar
+### 3. Firewall (iptables)
+- Integrado ao container **router**.
+- Regras de forwarding e NAT entre sub-redes.
+- IPs do roteador: `172.20.1.7` (servidores), `172.20.2.7` (clientes)
 
-1.  Após a inicialização, você pode acessar o container do cliente para verificar se ele recebeu um endereço IP do servidor DHCP e se consegue resolver nomes usando o servidor DNS.
+### 4. LDAP (OpenLDAP)
+- Diretório de autenticação centralizado.
+- Base DN: `dc=intranet,dc=local`
+- IP: `172.20.1.18`
 
-    ```bash
-    docker exec -it cliente1 sh
-    ```
+### 5. SAMBA
+- Compartilhamento de arquivos via rede.
+- Diretório: `/srv/samba_share`
+- IP: `172.20.1.20`
 
-2.  Dentro do shell do container `cliente1`:
+### 6. FTP (vsftpd)
+- Acesso restrito com modo passivo configurado.
+- Portas: 2121 (ativa), 20000-21000 (passiva)
+- IP: `172.20.1.16`
 
-    * **Verificar o endereço IP:**
-        ```bash
-        ip a
-        ```
-        Você deverá ver uma interface (geralmente `eth0`) com um endereço IP na faixa `192.168.2.100 - 192.168.2.200`.
+### 7. Web Server (Apache)
+- Index HTML de boas-vindas
+- IP: `172.20.1.14`, porta: `8080` (externa)
 
-    * **Verificar os servidores DNS configurados:**
-        ```bash
-        cat /etc/resolv.conf
-        ```
-        Você deverá ver `nameserver 192.168.1.10`.
+## Roteador
+- Contém NAT, DHCP Relay e IP Forwarding ativados
+- Conecta as redes clientes e servidores
 
-    * **Testar a resolução de nomes internos:**
-        ```bash
-        ping -c 2 dns.intranet.local
-        ping -c 2 router.intranet.local
-        ```
+## Cliente (cliente1)
+- Recebe IP via DHCP
+- DNS: configurado para `172.20.1.10`
+- Scripts de entrada automatizam testes de conectividade
 
-    * **Testar a resolução de nomes externos (através do forwarder):**
-        ```bash
-        ping -c 2 google.com
-        ```
+## Testes Automatizados
+Os testes são executados automaticamente na inicialização do container `cliente1`. O resultado pode ser verificado via:
+```bash
+docker logs cliente1
+```
 
-## Próximos Passos
+### Testes Executados:
+1. **IP via DHCP**
+```bash
+ip a
+```
+2. **Ping para Roteador (clientes)**
+```bash
+ping -c 3 172.20.2.7
+```
+3. **Ping para Roteador (servidores)**
+```bash
+ping -c 3 172.20.1.7
+```
+4. **Ping para DNS**
+```bash
+ping -c 3 172.20.1.10
+```
+5. **Ping para Web Server**
+```bash
+ping -c 3 172.20.1.14
+```
+6. **DNS Resolution (exemplo)**
+```bash
+dig web.intranet.local @172.20.1.10
+```
+7. **HTTP Request**
+```bash
+curl http://web.intranet.local
+```
+8. **FTP Connection**
+```bash
+ftp -inv 172.20.1.16
+```
 
-Continue adicionando os outros serviços (Firewall, LDAP, SAMBA, FTP, Web Server) ao seu `docker-compose.yml` e criando os respectivos `Dockerfiles` e arquivos de configuração. Lembre-se de configurar as redes corretamente e integrar os serviços.
+### Prints de Verificação
 
-## Observações
+<p align="center">
+  <img src="teste_ip_estatico.png" alt="TESTE1" width="500"/>
+</p>
 
-* O arquivo `named.conf.options` agora define o `listen-on` para o IP do container DNS e configura o encaminhamento para servidores DNS públicos.
-* Os arquivos de zona DNS (`db.intranet.local` e `db.192.168.1`) contêm registros para os serviços futuros.
-* O `dhcpd.conf` está configurado para fornecer IPs na sub-rede `192.168.2.0/24`, definindo o roteador como gateway e o servidor DNS interno.
-* Adicionamos um container `cliente` baseado em Alpine Linux para facilitar os testes.
-* O comando no container `router` agora inclui uma rota para a rede de clientes através da interface `eth1` (a interface conectada à rede `clientes`).
+<p align="center">
+  <img src="teste_ip_dinamico.png" alt="TESTE2" width="500"/>
+</p>
 
-Agora, ao executar `docker-compose up -d`, você terá um ambiente básico funcional com DNS resolvendo nomes internos e externos, DHCP atribuindo IPs ao cliente, e um roteador conectando as duas sub-redes. Você pode entrar no container `cliente1` para verificar a configuração de rede que ele recebeu.
+<p align="center">
+  <img src="teste_ping_web.png" alt="TESTE3" width="500"/>
+</p>
+
+<p align="center">
+  <img src="teste_ping_redes.png" alt="TESTE4" width="500"/>
+</p>
+
+<p align="center">
+  <img src="teste_nome_dominio_web.png" alt="TESTE5" width="500"/>
+</p>
+
+## Execução
+```bash
+docker-compose up --build
+```
 
 
+Instituto Federal Goiano, 2025.
 
-docker exec cliente1 ping 172.20.1.14 # Ping pelo IP
-docker exec cliente1 ping web.intranet.local # Ping pelo nome (testa DNS)
-docker exec cliente1 wget -O - http://172.20.1.14 # Baixar página pelo IP
-docker exec cliente1 wget -O - http://web.intranet.local # Baixar página pelo nome (testa DNS)

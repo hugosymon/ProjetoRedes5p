@@ -1,25 +1,21 @@
-# Use uma imagem base Ubuntu
-FROM ubuntu:latest
+FROM ubuntu:20.04
 
-# Atualize a lista de pacotes e instale o vsftpd
-RUN apt-get update && \
-    apt-get install -y vsftpd --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Crie o diretório para o arquivo de configuração vsftpd
-RUN mkdir -p /etc/vsftpd
+RUN apt update && \
+    apt install -y vsftpd ftp openssl && \
+    useradd -m ftpuser && \
+    echo "ftpuser:1234" | chpasswd && \
+    mkdir -p /home/ftpuser/ftp/files && \
+    chown -R ftpuser:ftpuser /home/ftpuser/ftp
 
-# Crie o diretório para usuários locais (chroot)
-RUN mkdir -p /home/vsftpd_users
+COPY vsftpd.conf /etc/vsftpd.conf
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh \
+    && mkdir -p /var/run/vsftpd/empty \
+    && chown root:root /var/run/vsftpd/empty \
+    && chmod 755 /var/run/vsftpd/empty
 
-# Copie o script de entrada (entrypoint) se necessário para config dinâmica, ou apenas use vsftpd no CMD
-# Aqui vamos usar CMD para simplicidade e montar a config
+EXPOSE 20 21 10090-10100
 
-# Exponha a porta de controle padrão do FTP
-EXPOSE 21
-# Exponha uma faixa de portas para modo passivo (exemplo)
-# EXPOSE 20000-21000 # Defina esta faixa no vsftpd.conf também
-
-# Comando para manter o vsftpd rodando em primeiro plano
-# O flag -p especifica o PID file
-CMD ["/usr/sbin/vsftpd", "/etc/vsftpd.conf"]
+CMD ["/entrypoint.sh"]

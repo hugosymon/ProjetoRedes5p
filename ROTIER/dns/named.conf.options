@@ -3,7 +3,7 @@ options {
     recursion yes;
     allow-query { any; };
     forwarders { 8.8.8.8; 8.8.4.4; };
-    listen-on { 172.20.1.10; 172.20.2.10; }; // Escuta em ambos os IPs
+    listen-on { any; }; // Escuta em ambos os IPs
     listen-on-v6 { none; }; // Pode manter none se não usar IPv6
 
     // Outras opções comuns (opcional):

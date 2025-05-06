@@ -1,0 +1,16 @@
+dn: dc=intranet,dc=local
+objectClass: top
+objectClass: domain
+dc: intranet
+
+dn: ou=usuarios,dc=intranet,dc=local
+objectClass: organizationalUnit
+ou: usuarios
+
+dn: cn=joao,ou=usuarios,dc=intranet,dc=local
+objectClass: inetOrgPerson
+sn: joao
+cn: joao
+uid: joao
+mail: joao@intranet.local
+userPassword: joaosecreto

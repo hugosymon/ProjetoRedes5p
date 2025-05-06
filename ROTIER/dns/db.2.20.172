@@ -7,5 +7,4 @@ $TTL    604800
                         604800 )       ; Negative Cache TTL
 ;
 @       IN      NS      dns.intranet.local.
-100     IN      PTR     cliente1.intranet.local.
 7       IN      PTR     router.intranet.local.

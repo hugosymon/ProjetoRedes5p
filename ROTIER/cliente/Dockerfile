@@ -1,8 +1,16 @@
-# Use a imagem base Alpine
-FROM alpine:latest
+FROM debian:bullseye-slim
 
-# Atualize a lista de pacotes e instale iputils (para ping) e curl
-RUN apk update && apk add --no-cache iputils curl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    isc-dhcp-client \
+    iputils-ping \
+    dnsutils \
+    curl \
+    netcat \
+    ldap-utils && \
+    rm -rf /var/lib/apt/lists/*
 
-# Comando para manter o container ativo (conforme já definimos no docker-compose.yml)
-CMD ["sleep", "infinity"]
+COPY entrypoint.sh /entrypoint.sh
+COPY testes.sh /root/testes.sh
+RUN chmod +x /entrypoint.sh /root/testes.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
