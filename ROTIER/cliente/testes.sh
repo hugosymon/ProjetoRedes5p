@@ -20,18 +20,18 @@ dig web.intranet.local @172.20.1.10 +short
 echo -e "\n[6] Testando acesso à página web via curl:"
 curl -s http://web.intranet.local | head -n 10
 
+echo "\n[7] Teste Webserver (porta 80):"
+curl -I 192.168.11.50
+
 echo -e "\n[8] Testando busca LDAP:"
 ldapsearch -x -H ldap://172.20.1.18 -b dc=intranet,dc=local | head -n 10
 
-echo "[5] Teste LDAP (porta 389):"
+echo "\n[9] Teste LDAP (porta 389):"
 nc -zv 192.168.11.60 389
 echo
 
-echo "[6] Teste FTP (porta 21):"
+echo "\n[10] Teste FTP (porta 21):"
 nc -zv 192.168.11.51 21
-echo
 
-echo "[7] Teste Webserver (porta 80):"
-curl -I 192.168.11.50
 
 echo "==================== FIM DOS TESTES ===================="

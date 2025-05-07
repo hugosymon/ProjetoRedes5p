@@ -27,33 +27,32 @@ services:
     restart: unless-stopped
 
   ftp:
-    build: ./ftp
-    container_name: ftp
-    restart: unless-stopped
-    cap_add:
-      - NET_ADMIN
+    build: stilliard/pure-ftpd
+    container_name: ftp-server
     ports:
       - "21:21"
-      - "20:20"
-      - "10090-10100:10090-10100"
+      - "30000-30009:30000-30009"
+    volumes:
+      - ./ftp:/home/ftpusers
     networks:
       servidores:
         ipv4_address: 172.20.1.16
+    restart: unless-stopped
 
   ldap:
-    build: ./ldap
+    build: osixia/openldap:1.5.0
     container_name: ldap-server
     networks:
       servidores:
         ipv4_address: 172.20.1.18
     volumes:
-      - ldap_data:/var/lib/ldap
-      - ldap_config:/etc/ldap/slapd.d
+      - .ldap/data:/var/lib/ldap
+      - .ldap/config:/etc/ldap/slapd.d
     ports:
       - "389:389"
       - "636:636"
     environment:
-      - LDAP_ORGANISATION=MinhaEmpresa
+      - LDAP_ORGANISATION=intranet
       - LDAP_DOMAIN=intranet.local
       - LDAP_ADMIN_PASSWORD=admin
     restart: unless-stopped
