@@ -123,23 +123,23 @@ ftp -inv 172.20.1.16
 ### Prints de Verificação
 
 <p align="center">
-  <img src="teste_ip_estatico.png" alt="TESTE1" width="500"/>
+  <img src="assets/teste_ip_estatico.png" alt="TESTE1" width="500"/>
 </p>
 
 <p align="center">
-  <img src="teste_ip_dinamico.png" alt="TESTE2" width="500"/>
+  <img src="assets/teste_ip_dinamico.png" alt="TESTE2" width="500"/>
 </p>
 
 <p align="center">
-  <img src="teste_ping_web.png" alt="TESTE3" width="500"/>
+  <img src="assets/teste_ping_web.png" alt="TESTE3" width="500"/>
 </p>
 
 <p align="center">
-  <img src="teste_ping_redes.png" alt="TESTE4" width="500"/>
+  <img src="assets/teste_ping_redes.png" alt="TESTE4" width="500"/>
 </p>
 
 <p align="center">
-  <img src="teste_nome_dominio_web.png" alt="TESTE5" width="500"/>
+  <img src="assets/teste_nome_dominio_web.png" alt="TESTE5" width="500"/>
 </p>
 
 ## Execução
