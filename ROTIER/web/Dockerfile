@@ -6,7 +6,7 @@ RUN apt-get update && \
 
 RUN rm /var/www/html/index.html
 
-# Exponha a porta 80 (HTTP)
+# Expoe a porta 80 (HTTP)
 EXPOSE 80
 
 COPY entrypoint.sh /entrypoint.sh
